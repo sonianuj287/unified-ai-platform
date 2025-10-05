@@ -4,4 +4,3 @@
     url = ../dvc_remote
 ['remote "origin"']
     url = git@github.com:anujsoni/mlops-dvc-storage.git
-    fetch = True
