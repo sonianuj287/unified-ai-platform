@@ -1,0 +1,144 @@
+name: CI / GitOps - DVC repro & promote model
+
+on:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: write  # needed to push commits back
+  id-token: write
+
+jobs:
+  repro-and-promote:
+    runs-on: ubuntu-latest
+    env:
+      PYTHONUNBUFFERED: 1
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install system deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential
+
+      - name: Install Python deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install "dvc[s3]" mlflow
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: DVC Pull (get data & artifacts)
+        env:
+          # If using remote storage requiring credentials, set secrets in repo and reference here.
+          # e.g. AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
+        run: |
+          dvc pull || echo "dvc pull failed (maybe no remote configured). Continue."
+
+      - name: Run entire DVC pipeline (repro)
+        run: |
+          dvc repro
+
+      - name: Read latest evaluation metrics
+        id: read_metrics
+        run: |
+          python - <<'PY'
+import json,sys
+with open('metrics/eval.json') as f:
+    data = json.load(f)
+print(json.dumps(data))
+# write to GitHub Actions output
+print("::set-output name=metrics::{}".format(json.dumps(data)))
+PY
+
+      - name: Compare with deployed metrics and possibly promote
+        id: promote
+        run: |
+          python - <<'PY'
+import json, os, subprocess, sys, datetime
+
+# Paths
+repo_root = os.getcwd()
+eval_path = os.path.join(repo_root, "metrics", "eval.json")
+deployed_metrics_path = os.path.join(repo_root, "deploy", "deployed_metrics.json")
+manifest_path = os.path.join(repo_root, "deploy", "manifest.yaml")
+
+# Read eval metrics
+with open(eval_path) as f:
+    eval_metrics = json.load(f)
+
+# ensure deployed metrics exists
+if not os.path.exists(deployed_metrics_path):
+    # create a default deployed metrics to compare against (very bad baseline)
+    base = {"reconstruction_error_mean": 1e9}
+    with open(deployed_metrics_path, "w") as f:
+        json.dump(base, f)
+    deployed_metrics = base
+else:
+    with open(deployed_metrics_path) as f:
+        deployed_metrics = json.load(f)
+
+# We assume lower reconstruction_error_mean is better
+new_score = float(eval_metrics.get("reconstruction_error_mean", 1e9))
+old_score = float(deployed_metrics.get("reconstruction_error_mean", 1e9))
+
+print(f"Old score: {old_score}, New score: {new_score}")
+
+if new_score < old_score:
+    print("New model is better — updating deployment manifest and deployed_metrics.json")
+
+    # Update deployed_metrics.json
+    with open(deployed_metrics_path, "w") as f:
+        json.dump(eval_metrics, f, indent=2)
+
+    # Update manifest: set annotation model-run-id (or timestamp)
+    if os.path.exists(manifest_path):
+        with open(manifest_path) as f:
+            txt = f.read()
+        # naive replace or add annotation line; ensure file has metadata.annotations section
+        # We'll insert/update a line "model-run-id: <timestamp>"
+        new_run_id = eval_metrics.get("run_id", f"run-{datetime.datetime.utcnow().isoformat()}")
+        # If annotation already present, replace; else append under metadata.annotations
+        if "model-run-id:" in txt:
+            txt = txt.replace(
+                txt[txt.find("model-run-id:"):txt.find("\n", txt.find("model-run-id:"))],
+                f"model-run-id: \"{new_run_id}\""
+            )
+        else:
+            # simple append near top (this part expects YAML format with metadata)
+            txt = txt.replace("metadata:", "metadata:\n  annotations:\n    model-run-id: \"{}\"".format(new_run_id))
+        with open(manifest_path, "w") as f:
+            f.write(txt)
+    else:
+        print("Manifest file not found at deploy/manifest.yaml — create one to enable GitOps deployment.")
+        # create a minimal manifest for detections
+        with open(manifest_path, "w") as f:
+            f.write("apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: model-metadata\n  annotations:\n    model-run-id: \"{}\"\n".format(eval_metrics.get("run_id", new_run_id)))
+
+    # Commit changes
+    subprocess.check_call(["git", "add", "deploy/manifest.yaml", "deploy/deployed_metrics.json"])
+    subprocess.check_call(["git", "commit", "-m", f"Promote model: improved reconstruction_error_mean {old_score:.6f} -> {new_score:.6f}"])
+    # Push back to repo (GH Actions runner has GITHUB_TOKEN permission)
+    subprocess.check_call(["git", "push", "origin", "HEAD:main"])
+    print("Committed and pushed promotion changes.")
+    sys.exit(0)
+else:
+    print("New model not better. Nothing to promote.")
+    sys.exit(0)
+PY
+      env:
+        # if you need credentials for pushing, GITHUB_TOKEN is enough for repository writes by actions.
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

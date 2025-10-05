@@ -1,0 +1,19 @@
+# params.yaml
+preprocess:
+  input: "data/raw/dataset.csv"
+  output: "data/processed/processed.csv"
+
+train:
+  seq_len: 50
+  latent_dim: 8
+  hidden_size: 32
+  num_layers: 1
+  batch_size: 64
+  epochs: 5
+  lr: 0.001
+  model_dir: "models"
+  mlflow_experiment: "LSTM_Anomaly_Detector"
+
+evaluate:
+  threshold_k: 3.0
+  metrics_out: "metrics/eval.json"

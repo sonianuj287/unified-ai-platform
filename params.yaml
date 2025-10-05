@@ -1,0 +1,23 @@
+preprocess:
+  input: "data/raw/dataset.csv"        # raw data location
+  output: "data/processed/processed.csv" # cleaned & scaled data
+  test_split: 0.2                      # add flexibility for future train/test split
+  scaler_path: "models/scaler.joblib"  # keep consistent model artifacts
+
+train:
+  seq_len: 50
+  latent_dim: 8
+  hidden_size: 32
+  num_layers: 1
+  batch_size: 64
+  epochs: 5
+  lr: 0.001
+  model_dir: "models"
+  model_name: "lstm_autoencoder.pt"    # explicit file name for clarity
+  mlflow_experiment: "LSTM_Anomaly_Detector"
+  seed: 42                             # ensures reproducibility for same runs
+
+evaluate:
+  threshold_k: 3.0
+  metrics_out: "metrics/eval.json"
+  anomaly_threshold: 0.01              # consistent with inference threshold

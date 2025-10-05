@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/anujsoni/Desktop/unified-ai-platform/mlruns/733078329865498369/7ddfe853c90248df84150611f6174506/artifacts
+end_time: 1759609743290
+entry_point_name: ''
+experiment_id: '733078329865498369'
+lifecycle_stage: active
+run_id: 7ddfe853c90248df84150611f6174506
+run_name: LSTM_Anomaly_Detector
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1759609736545
+status: 3
+tags: []
+user_id: anujsoni

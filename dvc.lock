@@ -1,0 +1,83 @@
+schema: '2.0'
+stages:
+  preprocess:
+    cmd: python src/preprocess.py --input data/raw/dataset.csv --output 
+      data/processed/processed.csv
+    deps:
+    - path: data/raw/dataset.csv
+      hash: md5
+      md5: bd91837f2d9d0747b88610e2d7b6926b
+      size: 370922
+    - path: src/preprocess.py
+      hash: md5
+      md5: 183ac5962c7c444cb75abe595eb8197e
+      size: 1161
+    params:
+      params.yaml:
+        preprocess.input: data/raw/dataset.csv
+        preprocess.output: data/processed/processed.csv
+    outs:
+    - path: data/processed/processed.csv
+      hash: md5
+      md5: 242a3f282933afea5e00223f65278c2f
+      size: 218726
+  train:
+    cmd: "python src/train.py --csv data/processed/processed.csv --seq_len 50 --latent_dim
+      8 --hidden_size 32 --num_layers 1 --batch_size 64 --epochs 5 --lr 0.001 --out_dir
+      models --mlflow_experiment LSTM_Anomaly_Detector\n"
+    deps:
+    - path: data/processed/processed.csv
+      hash: md5
+      md5: 242a3f282933afea5e00223f65278c2f
+      size: 218726
+    - path: src/model_lstm_ae.py
+      hash: md5
+      md5: 2024f922b504573578c79e36f7e5c852
+      size: 1452
+    - path: src/train.py
+      hash: md5
+      md5: 9c08b9acb0bf7282e9d6df8fa1be31c2
+      size: 4799
+    params:
+      params.yaml:
+        train.batch_size: 64
+        train.epochs: 5
+        train.hidden_size: 32
+        train.latent_dim: 8
+        train.lr: 0.001
+        train.mlflow_experiment: LSTM_Anomaly_Detector
+        train.model_dir: models
+        train.num_layers: 1
+        train.seq_len: 50
+    outs:
+    - path: models
+      hash: md5
+      md5: 84bf3a16a1c86d1c3d98f51d93b03558.dir
+      size: 59401
+      nfiles: 3
+  evaluate:
+    cmd: python src/evaluate.py --csv data/processed/processed.csv --model_dir 
+      models --out metrics/eval.json --threshold_k 3.0
+    deps:
+    - path: data/processed/processed.csv
+      hash: md5
+      md5: 242a3f282933afea5e00223f65278c2f
+      size: 218726
+    - path: models
+      hash: md5
+      md5: 84bf3a16a1c86d1c3d98f51d93b03558.dir
+      size: 59401
+      nfiles: 3
+    - path: src/evaluate.py
+      hash: md5
+      md5: f4cd6a2050d71b39ba2a61168eb90aa5
+      size: 2437
+    params:
+      params.yaml:
+        evaluate.metrics_out: metrics/eval.json
+        evaluate.threshold_k: 3.0
+    outs:
+    - path: metrics/eval.json
+      hash: md5
+      md5: 8ffee1fe2ffbbe495804eadcb39e2cb3
+      size: 238

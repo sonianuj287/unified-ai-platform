@@ -1,0 +1,53 @@
+stages:
+  preprocess:
+    cmd: python src/preprocess.py --input ${preprocess.input} --output ${preprocess.output}
+    deps:
+      - src/preprocess.py
+      - ${preprocess.input}
+    params:
+      - preprocess.input
+      - preprocess.output
+    outs:
+      - ${preprocess.output}
+
+  train:
+    cmd: >
+      python src/train.py
+      --csv data/processed/processed.csv
+      --seq_len ${train.seq_len}
+      --latent_dim ${train.latent_dim}
+      --hidden_size ${train.hidden_size}
+      --num_layers ${train.num_layers}
+      --batch_size ${train.batch_size}
+      --epochs ${train.epochs}
+      --lr ${train.lr}
+      --out_dir ${train.model_dir}
+      --mlflow_experiment ${train.mlflow_experiment}
+    deps:
+      - src/train.py
+      - src/model_lstm_ae.py
+      - ${preprocess.output}
+    params:
+      - train.seq_len
+      - train.latent_dim
+      - train.hidden_size
+      - train.num_layers
+      - train.batch_size
+      - train.epochs
+      - train.lr
+      - train.model_dir
+      - train.mlflow_experiment
+    outs:
+      - ${train.model_dir}
+
+  evaluate:
+    cmd: python src/evaluate.py --csv ${preprocess.output} --model_dir ${train.model_dir} --out ${evaluate.metrics_out} --threshold_k ${evaluate.threshold_k}
+    deps:
+      - src/evaluate.py
+      - ${preprocess.output}
+      - ${train.model_dir}
+    params:
+      - evaluate.threshold_k
+      - evaluate.metrics_out
+    outs:
+      - ${evaluate.metrics_out}

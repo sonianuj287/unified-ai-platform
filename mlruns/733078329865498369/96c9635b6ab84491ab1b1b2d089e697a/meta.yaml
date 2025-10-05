@@ -1,0 +1,14 @@
+artifact_uri: file:///Users/anujsoni/Desktop/unified-ai-platform/mlruns/733078329865498369/96c9635b6ab84491ab1b1b2d089e697a/artifacts
+end_time: 1759667504809
+entry_point_name: ''
+experiment_id: '733078329865498369'
+lifecycle_stage: active
+run_id: 96c9635b6ab84491ab1b1b2d089e697a
+run_name: nebulous-stork-243
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1759667496215
+status: 3
+tags: []
+user_id: anujsoni

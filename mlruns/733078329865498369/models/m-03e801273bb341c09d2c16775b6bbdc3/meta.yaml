@@ -1,0 +1,10 @@
+artifact_location: file:///Users/anujsoni/Desktop/unified-ai-platform/mlruns/733078329865498369/models/m-03e801273bb341c09d2c16775b6bbdc3/artifacts
+creation_timestamp: 1759667500483
+experiment_id: '733078329865498369'
+last_updated_timestamp: 1759667503177
+model_id: m-03e801273bb341c09d2c16775b6bbdc3
+model_type: null
+name: lstm_ae_model
+source_run_id: 96c9635b6ab84491ab1b1b2d089e697a
+status: 2
+status_message: null

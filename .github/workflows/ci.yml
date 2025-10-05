@@ -1,0 +1,36 @@
+name: CI - MLOps pipeline
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  pipeline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install dvc[all] mlflow
+
+      - name: DVC pull
+        run: dvc pull
+
+      - name: Run pipeline (dvc repro)
+        run: dvc repro
+
+      - name: Upload evaluation metrics
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-metrics
+          path: metrics/eval.json

@@ -1,0 +1,25 @@
+# Core ML
+torch
+pandas
+numpy
+scikit-learn
+
+# MLOps
+mlflow
+dvc
+dvc[gs]   # optional: for Google Cloud; use [s3] or [azure] as needed
+
+# LLM + RAG
+langchain
+faiss-cpu
+sentence-transformers
+openai
+
+# Serving + UI
+fastapi
+uvicorn
+streamlit
+
+# Utilities
+python-dotenv
+tqdm
