@@ -1,0 +1,9 @@
+langchain 
+openai 
+faiss-cpu 
+sentence-transformers 
+pypdf
+llama-index
+streamlit
+langchain-google-genai
+langchain-community
