@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: model-metadata
+  namespace: ml-services
+  annotations:
+    model-run-id: "INITIAL"   # will be replaced by GitHub Action when promoting
+data:
+  description: "Model metadata managed by GitOps. action updates annotations on new model promotions."
