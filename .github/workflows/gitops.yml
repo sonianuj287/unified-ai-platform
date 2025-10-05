@@ -15,6 +15,11 @@ jobs:
       PYTHONUNBUFFERED: 1
 
     steps:
+      - name: Set up DVC remote auth
+        run: |
+          git config --global credential.helper store
+          echo "https://$DVC_GITHUB_TOKEN@github.com" > ~/.git-credentials
+
       - name: Checkout repo
         uses: actions/checkout@v4
         with:

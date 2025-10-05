@@ -1,0 +1,8 @@
+{
+  "reconstruction_error_mean": 0.0029141793493181467,
+  "reconstruction_error_std": 0.016191452741622925,
+  "threshold": 0.05148853734135628,
+  "num_anomalies": 40,
+  "num_windows": 4051,
+  "run_id": "96c9635b6ab84491ab1b1b2d089e697a"
+}
